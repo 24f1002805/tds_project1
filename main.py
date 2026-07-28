@@ -8,9 +8,12 @@ app = FastAPI()
 
 TELEGRAM_TOKEN = "8952277673:AAHKiU_I-cO1dtLllLef_t5-f1Go3Wai2JQ"
 
-# Automatically figure out the public URL on Render or default to localhost for testing
-RENDER_EXTERNAL_URL = os.getenv("RENDER_EXTERNAL_URL")
-RENDER_URL = f"https://{RENDER_EXTERNAL_URL}" if RENDER_EXTERNAL_URL else os.getenv("RENDER_URL", "http://localhost:8000")
+# Retrieve your Render URL directly from environment variables
+RENDER_URL = os.getenv("RENDER_EXTERNAL_URL")
+if RENDER_URL:
+    RENDER_URL = f"https://{RENDER_URL}"
+else:
+    RENDER_URL = os.getenv("RENDER_URL", "https://your-app-name.onrender.com")
 
 @app.post("/webhook")
 async def telegram_webhook(request: Request):
@@ -22,7 +25,7 @@ async def telegram_webhook(request: Request):
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_message = update.message.text
     
-    # Logic placeholder for analysis answer
+    # Analysis answer placeholder
     analysis_answer = {"result": "Analyzed question successfully"}
     
     log_data = {"question": user_message, "answer": analysis_answer, "status": "SUCCESS"}
@@ -49,8 +52,13 @@ def get_log():
 @app.on_event("startup")
 async def startup_event():
     await application.initialize()
-    webhook_url = f"{RENDER_URL}/webhook"
-    await application.bot.set_webhook(url=webhook_url)
+    if RENDER_URL and "localhost" not in RENDER_URL:
+        try:
+            webhook_url = f"{RENDER_URL}/webhook"
+            await application.bot.set_webhook(url=webhook_url)
+            print(f"Webhook successfully set to: {webhook_url}")
+        except Exception as e:
+            print(f"Skipping webhook auto-setup: {e}")
 
 if __name__ == "__main__":
     import uvicorn
