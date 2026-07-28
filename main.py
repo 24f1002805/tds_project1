@@ -7,7 +7,10 @@ from telegram.ext import Application, MessageHandler, filters, ContextTypes
 app = FastAPI()
 
 TELEGRAM_TOKEN = "8952277673:AAHKiU_I-cO1dtLllLef_t5-f1Go3Wai2JQ"
-RENDER_URL = os.getenv("RENDER_URL", "https://your-app-name.onrender.com")
+
+# Automatically figure out the public URL on Render or default to localhost for testing
+RENDER_EXTERNAL_URL = os.getenv("RENDER_EXTERNAL_URL")
+RENDER_URL = f"https://{RENDER_EXTERNAL_URL}" if RENDER_EXTERNAL_URL else os.getenv("RENDER_URL", "http://localhost:8000")
 
 @app.post("/webhook")
 async def telegram_webhook(request: Request):
@@ -18,10 +21,10 @@ async def telegram_webhook(request: Request):
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_message = update.message.text
-
+    
     # Logic placeholder for analysis answer
     analysis_answer = {"result": "Analyzed question successfully"}
-
+    
     log_data = {"question": user_message, "answer": analysis_answer, "status": "SUCCESS"}
     with open("run.jsonl", "w") as f:
         f.write(json.dumps(log_data) + "\n")
